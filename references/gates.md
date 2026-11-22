@@ -1,6 +1,8 @@
 # Judgment calls behind the gates
 
-The script applies the gates and owns every threshold (see the constants at the top of [scripts/diagnose.py](../scripts/diagnose.py)). This file covers only the yes/no calls you make when filling in the input.
+The script applies the gates and owns the thresholds. Use these questions to record the owner's answers.
+
+`done_by`, `asks_first` and `owner_limits` are for the audit and report. The script reads your answer to `on_own_is_reversible` directly.
 
 ## `rule_covers_most`: does this need AI at all?
 
@@ -16,10 +18,6 @@ When in doubt, write the rule out. If you can't write it in a few lines, it's pr
 
 ## `on_own_is_reversible`: is everything it does alone easy to undo?
 
-`true` only if every action outside `asks_first` can be undone cheaply: a draft, a reply, a reschedule, a reminder. Refunds, payments, cancelled orders, binding quotes and anything that affects safety belong in `asks_first`. If they can't go there, set this to `false`.
+By default, put every money-moving or irreversible step in `asks_first`, along with binding commitments and safety decisions. Drafting a reply is easy to undo. A customer may already have acted on a sent reply.
 
-The one exception is an owner limit: the owner may let a money action run on its own up to an amount they choose (for example, refunds up to $50). Record it in `owner_limits`. Actions inside an owner limit are the owner's accepted risk and don't make this `false`; anything above the limit stays in `asks_first`. Never suggest a limit yourself; the owner names the amount.
-
-## `evidence`
-
-`"export"` once you have updated `weekly_volume` from real records. Otherwise leave it out; the script works out the evidence level from `hours_claims`.
+Only the owner can make an exception for a specific money action. Record the action and the amount they name in `owner_limits`. In `asks_first`, list that action only above the limit. Set `on_own_is_reversible` to `true` if every other step the assistant takes on its own is easy to undo. Otherwise set it to `false`.

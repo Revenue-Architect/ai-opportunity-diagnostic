@@ -62,12 +62,17 @@ def evidence_level(job):
 def assess(job, loaded_hourly_cost):
     result = {"id": job["id"], "name": job["name"]}
 
-    if job.get("rule_covers_most"):
+    if not isinstance(job.get("rule_covers_most"), bool):
+        raise InputError(f"job '{job['id']}': 'rule_covers_most' must be true or false")
+    if job["rule_covers_most"]:
         if not job.get("rule_fix"):
             raise InputError(f"job '{job['id']}': 'rule_covers_most' is true, so name the fix in 'rule_fix'")
         result.update(outcome=NOT_AI, reason=job["rule_fix"])
         return result
 
+    if (isinstance(loaded_hourly_cost, bool) or not isinstance(loaded_hourly_cost, (int, float))
+            or loaded_hourly_cost <= 0):
+        raise InputError("'loaded_hourly_cost' must be a positive number")
     hours_per_week = _num(job, "weekly_volume") * _num(job, "minutes_per_item") / 60
     share = _num(job, "share_handled", 0, 1)
     labour = hours_per_week * WEEKS_PER_YEAR * loaded_hourly_cost * share
@@ -96,15 +101,18 @@ def assess(job, loaded_hourly_cost):
         net_first_year=round(net),
     )
 
-    if result["net_first_year"] <= 0:
+    if net <= 0:
         result.update(outcome=NOT_WORTH_IT, reason="does not pay back its build and run cost within a year")
         return result
 
     blockers = []
+    for field in ("data_ready", "on_own_is_reversible"):
+        if field in job and not isinstance(job[field], bool):
+            raise InputError(f"job '{job['id']}': '{field}' must be true or false")
     if not job.get("data_ready"):
         blockers.append(f"data: {job.get('data_blocker') or 'records not usable yet'}")
     if not job.get("on_own_is_reversible"):
-        blockers.append("reversibility: move every hard-to-undo action into asks_first")
+        blockers.append("someone must approve a hard-to-undo step outside the owner's limits")
     if not job.get("approver"):
         blockers.append("no named approver")
     if not job.get("rollback"):
@@ -119,8 +127,6 @@ def assess(job, loaded_hourly_cost):
 
 def diagnose(case):
     cost = case.get("loaded_hourly_cost")
-    if not isinstance(cost, (int, float)) or isinstance(cost, bool) or cost <= 0:
-        raise InputError("'loaded_hourly_cost' must be a positive number")
     jobs = case.get("jobs") or []
     if not jobs:
         raise InputError("'jobs' is empty")
@@ -131,7 +137,7 @@ def diagnose(case):
         if not j.get("name"):
             raise InputError(f"job '{j['id']}': missing 'name'")
 
-    results = [assess(j, float(cost)) for j in jobs]
+    results = [assess(j, cost) for j in jobs]
     go = sorted((r for r in results if r["outcome"] == GO), key=lambda r: -r["net_first_year"])
     for rank, r in enumerate(go, 1):
         r["rank"] = rank
@@ -139,7 +145,7 @@ def diagnose(case):
 
 
 def _label(text):
-    return re.sub(r"[^A-Za-z0-9 \-]", "", text).strip() or "job"
+    return " ".join(re.sub(r"[^\w -]+", " ", text).split())
 
 
 def quadrant_chart(results):
@@ -154,29 +160,31 @@ def quadrant_chart(results):
         "  title Value vs ease",
         "  x-axis Harder to build --> Easier to build",
         "  y-axis Less value --> More value",
-        "  quadrant-1 Do first",
-        "  quadrant-2 Plan for",
-        "  quadrant-3 Skip",
-        "  quadrant-4 Small wins",
+        "  quadrant-1 Higher value and easier",
+        "  quadrant-2 Higher value and harder",
+        "  quadrant-3 Lower value and harder",
+        "  quadrant-4 Lower value and easier",
     ]
     for r in scored:
         x = round(1 - r["build_cost"] / top_build, 2)
         y = round(max(r["net_first_year"], 0) / top_value, 2)
         x, y = min(max(x, 0.02), 0.98), min(max(y, 0.02), 0.98)
-        lines.append(f"  {_label(r['name'] + ' - ' + r['outcome'])}: [{x}, {y}]")
+        label = _label(r["name"] + " - " + r["outcome"])
+        lines.append(f'  "{label}": [{x}, {y}]')
     return "\n".join(lines)
 
 
 def to_markdown(report):
     rows = ["| Rank | Job | Outcome | Net first year | Evidence | Why |", "|---|---|---|---|---|---|"]
-    order = {GO: 0, NOT_READY: 1, NOT_WORTH_IT: 2, NOT_AI: 3}
-    for r in sorted(report["jobs"], key=lambda r: (order[r["outcome"]], r.get("rank", 0))):
+    for r in sorted(report["jobs"], key=lambda r: r.get("net_first_year", float("-inf")), reverse=True):
         net = "–"
         if "net_first_year" in r:
             n = r["net_first_year"]
             net = f"{'-' if n < 0 else ''}${abs(n):,}"
-        rows.append(f"| {r.get('rank', '')} | {r['name']} | {r['outcome']} | {net} | "
-                    f"{r.get('evidence', '–')} | {r['reason']} |")
+        evidence = r.get("evidence", "–").replace("_", " ")
+        cells = [r.get("rank", ""), r["name"], r["outcome"], net, evidence, r["reason"]]
+        cells = [" ".join(str(cell).splitlines()).replace("|", r"\|") for cell in cells]
+        rows.append("| " + " | ".join(cells) + " |")
     chart = quadrant_chart(report["jobs"])
     title = f"## {report['business']}\n\n" if report.get("business") else ""
     return title + "\n".join(rows) + (f"\n\n```mermaid\n{chart}\n```\n" if chart else "\n")

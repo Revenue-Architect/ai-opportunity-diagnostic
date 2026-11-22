@@ -42,7 +42,7 @@
     },
     {
       "id": "daily_numbers",
-      "name": "Daily numbers summary",
+      "name": "Daily summary of field notes",
       "done_by": "Office manager",
       "weekly_volume": 5,
       "minutes_per_item": 10,
@@ -75,7 +75,7 @@
       "rule_covers_most": false,
       "data_ready": true,
       "on_own_is_reversible": true,
-      "asks_first": ["Offering any discount or payment plan", "Waiving a late fee over $25"],
+      "asks_first": ["Discounting the price of the work", "Offering a payment plan", "Waiving a late fee over $25"],
       "owner_limits": [{"action": "Waive a late fee", "up_to": 25}],
       "approver": "Office manager",
       "rollback": "Pause reminders in the invoicing tool",
