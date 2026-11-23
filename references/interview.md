@@ -27,12 +27,14 @@ If someone else does the job, ask for their weekly hours estimate too, ideally i
 
 ## 4. For each job that survives the No-AI check
 
-1. What share of these could an assistant fully handle, the way a capable new hire would? (`share_handled`)
+1. Which steps of this job could an assistant handle on its own, like a capable new hire? Roughly what share of items is that? (`share_handled`)
 2. If the job loses revenue, what share of that lost revenue could an assistant realistically win back? (`recapture_rate`)
 3. Which steps should wait for someone's say-so? Prompt for money, commitments, safety, and anything they can't undo. For a money step, ask whether they want to approve it every time. If they want a limit, ask what amount they choose. Record `asks_first` and `owner_limits` as described in the gates reference.
 4. Apart from any money action within the limit you set, could you easily undo everything the assistant would do on its own? (`on_own_is_reversible`: yes is `true`.)
 5. Who is the one person who owns this job and approves any asks-first items? (`approver`)
 6. If the assistant misbehaves, how do you switch back to the old way the same day? (`rollback`)
-7. Where do you keep the records? Then ask whether the assistant can get to them and use them as they are (`data_ready`). If the answer is no, ask what's missing (`data_blocker`).
+7. Which tools and records would the assistant have to read or work in? (`tools_needed`) Then ask whether the assistant can get to them and use them as they are (`data_ready`). If the answer is no, ask what's missing (`data_blocker`).
+
+Once you've covered the surviving jobs, ask which AI tool, if any, the business already pays for (for example ChatGPT, Microsoft Copilot, Google Gemini or Claude). Record it as `ai_tool`, or `"none"`.
 
 Build and run costs (`build_cost`, `monthly_run_cost`) come from the implementer's quote, not from the owner. If there is no quote yet, leave both out.

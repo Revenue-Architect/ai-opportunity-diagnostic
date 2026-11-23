@@ -70,3 +70,4 @@ The 2026-11-22 Gemini review ([reviews/2026-11-22-gemini-plan-review.md](reviews
 - 2026-11-22: Gemini 4 Neon High reviewed and polished the built Skill (18 fixes).
 - 2026-11-22: Codex GPT-6.2-Astra reviewed and polished it. Most fixes were kept; Fraction math was dropped.
 - 2026-11-22: Gemini 4 Neon High independently reviewed this plan against the blueprint. Verdict: agree, with five fixes, all since applied. It also verified the blueprint's technical claims. See [reviews/](reviews/).
+- 2026-11-22: v0.3 added the AI-tool question and a portable assistant brief that works in any AI tool. Gemini 4 Neon High QA'd it; all 11 findings were applied.

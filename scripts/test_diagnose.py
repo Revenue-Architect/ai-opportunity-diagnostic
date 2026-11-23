@@ -59,6 +59,7 @@ def test_example_values():
 
 def test_ranking():
     assert diagnose(EXAMPLE)["recommended"] == ["after_hours_inquiries"]
+    assert diagnose(EXAMPLE)["ai_tool"] == "ChatGPT"
 
 
 def test_same_input_same_output():
@@ -132,6 +133,7 @@ def test_no_quote_reports_the_most_a_build_can_cost():
 def test_no_ai_needs_no_hourly_rate():
     rule_job = next(j for j in EXAMPLE["jobs"] if j["rule_covers_most"])
     assert diagnose({"jobs": [rule_job]})["jobs"][0]["outcome"] == "Not AI"
+    assert diagnose({"jobs": [rule_job]})["ai_tool"] is None
 
 
 def test_missing_approver_blocks_go():

@@ -150,7 +150,8 @@ def diagnose(case):
     go = sorted((r for r in results if r["outcome"] == GO), key=lambda r: -r["net_first_year"])
     for rank, r in enumerate(go, 1):
         r["rank"] = rank
-    return {"business": case.get("business"), "recommended": [r["id"] for r in go], "jobs": results}
+    return {"business": case.get("business"), "ai_tool": case.get("ai_tool"),
+            "recommended": [r["id"] for r in go], "jobs": results}
 
 
 def _label(text):

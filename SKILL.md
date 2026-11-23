@@ -3,7 +3,7 @@ name: ai-opportunity-diagnostic
 description: Interview a small-business owner to decide whether an AI assistant would pay for itself, which jobs it could handle, and what it must ask about first. Use when an owner asks "where could AI save us time?" or "should we get an AI assistant?", or someone says "run an AI assessment", "audit our workflows for AI" or "map AI use cases", or a consultant wants to rank a client's AI opportunities before a pilot. Not for building or configuring the assistant, writing a general AI strategy, or reviewing code.
 metadata:
   author: agenticworks.ca
-  version: "0.2"
+  version: "0.3"
 ---
 
 # AI opportunity diagnostic

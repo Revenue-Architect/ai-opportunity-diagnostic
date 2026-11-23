@@ -1,6 +1,7 @@
 {
   "business": "Example plumbing company (made-up numbers; replace with a real case)",
   "loaded_hourly_cost": 45,
+  "ai_tool": "ChatGPT",
   "jobs": [
     {
       "id": "after_hours_inquiries",
@@ -19,6 +20,7 @@
       "asks_first": ["Booking an emergency call-out", "Any price quoted"],
       "approver": "Office manager",
       "rollback": "Forward the line back to voicemail",
+      "tools_needed": ["Phone line", "Jobber", "Gmail"],
       "build_cost": 3000,
       "monthly_run_cost": 150
     },
@@ -37,6 +39,7 @@
       "asks_first": ["Sending any quote"],
       "approver": "Owner",
       "rollback": "Owner writes quotes by hand again",
+      "tools_needed": ["Jobber", "Gmail"],
       "build_cost": 4000,
       "monthly_run_cost": 100
     },
@@ -52,6 +55,7 @@
       "on_own_is_reversible": true,
       "approver": "Owner",
       "rollback": "Turn it off",
+      "tools_needed": ["Jobber", "Gmail"],
       "build_cost": 1500,
       "monthly_run_cost": 50
     },
@@ -79,6 +83,7 @@
       "owner_limits": [{"action": "Waive a late fee", "up_to": 25}],
       "approver": "Office manager",
       "rollback": "Pause reminders in the invoicing tool",
+      "tools_needed": ["Invoicing tool", "Gmail"],
       "build_cost": 1000,
       "monthly_run_cost": 50
     }

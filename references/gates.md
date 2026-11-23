@@ -2,7 +2,7 @@
 
 The script applies the gates and owns the thresholds. Use these questions to record the owner's answers.
 
-`done_by`, `asks_first` and `owner_limits` are for the audit and report. The script reads your answer to `on_own_is_reversible` directly.
+`done_by`, `asks_first`, `owner_limits` and `tools_needed` are for the audit and report. The script reads your answer to `on_own_is_reversible` directly.
 
 ## `rule_covers_most`: does this need AI at all?
 
