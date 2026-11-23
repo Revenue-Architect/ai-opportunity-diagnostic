@@ -8,6 +8,8 @@ The script applies the gates and owns the thresholds. Use these questions to rec
 
 Set it to `true` when most of the job's cases follow fixed logic that needs no reading of free text, audio or images. Examples: route an order by SKU or region, send a reminder 24 hours before a booking, tag a customer by spend, sync a record between two systems. Then fill `rule_fix` with the specific rule, tool setting or webhook that would do it.
 
+Also set it to `true` when the real fix is a simple change in how people work, not software. Examples: an answering service, one person owning the callback list, or a set day for quoting. Name the change in `rule_fix`. Tell the owner as soon as you see it, not only in the report.
+
 Set it to `false` when the job depends on understanding messages, documents, calls or photos, or on judgment that changes case by case.
 
 When in doubt, write the rule out. If you can't write it in a few lines, it's probably `false`.

@@ -1,40 +1,81 @@
 # Interview
 
-Ask one question per message, including follow-ups. Give each job a name and a unique `id`. For shares and margins, record a percentage like 40% as `0.4`.
+A conversation, not a questionnaire. Aim for something useful by your fifth or sixth question and about twenty questions in all. Field names in `code` are for the input file only; never say them to the owner. Record shares and margins as decimals (40% is `0.4`).
 
-## 1. Context
+## 1. Open (two questions at most)
 
-- What the business does, how many people, which tools it runs on (email, calendar, booking, invoicing, CRM or store).
-- What a fully loaded hour of staff time costs them (wage plus overhead). This is `loaded_hourly_cost`. If they don't know, ask for the hourly wage and the rough overhead on top.
+- What the business does and roughly how many people work in it.
+- Then the story: "What slips through the cracks, or eats your week, more than anything else?" Followed by: "Tell me about the last time that happened."
 
-## 2. Walk the week, job by job
+If the owner opens with an AI idea ("I want an AI receptionist that handles everything"), don't argue and don't ignore it. Test it on their real story: "Let's take last Tuesday's lunch rush. Walk me through what came in, and we'll see what an assistant could have done with each one."
 
-Go through these areas in order and skip any that don't apply: new inquiries and leads, booking and scheduling, quotes and estimates, doing and delivering the work, customer questions and support, invoicing and collections, back-office admin.
+## 2. Follow the pain
 
-For each job that takes real time, ask, one at a time:
+Trace that one case from start to finish: what came in, who touched it, where it waited, why, and what the customer experienced. Check what happens downstream: who acts on the result, and do they have time to?
 
-1. Who does it? (`done_by`)
-2. How many times a week? (`weekly_volume`)
-3. How many minutes does someone spend working on one? (`minutes_per_item`; leave out time spent waiting for a reply.)
-4. How often does someone have to redo it? Ask what that costs. Count the extra work once, in the volume or the time per item. Follow up on lost sales below and on steps that need approval in section 4.
-5. When this job runs late or gets missed, do you lose sales? If yes, ask how much revenue is lost in a year, before allowing for what the assistant might win back (`recovered_revenue_annual`). Then ask what share of each sale is left after the cost of doing the work (`gross_margin`). Leave the revenue fields out if there is no lost revenue.
+Ask a follow-up when an answer is:
+- **vague** ("a lot", "depends"): ask for last week, or a range
+- **surprising**: ask how that came about
+- **emotional** ("it drives me crazy"): ask what it costs them
+- **a cause** ("nobody checks it after 4"): ask what happens then
 
-Ask the owner for their weekly hours estimate before sharing the calculation. Record their answer in `hours_claims.owner` if they know. If they say ten hours but 30 items × 5 minutes comes to 2.5 hours, ask what explains the difference.
+"What happens then?" is the question that finds the cost: a lost job, a refund, an angry review, a late night. When the owner mentions money going out the door (returns, refunds, write-offs, lost jobs), ask roughly how much a year before moving on. It is often the biggest number in the conversation.
 
-## 3. A second view
+Use [common-jobs.md](common-jobs.md) for the job the owner is describing. It suggests the sharp follow-ups and the usual non-AI fixes. Don't walk through the other jobs in it.
 
-If someone else does the job, ask for their weekly hours estimate too, ideally in a separate short conversation. Record it in `hours_claims.staff`. When the script flags a big gap, treat it as a finding and ask what explains it. Report it without blaming either person.
+## 3. Early read and one sweep
 
-## 4. For each job that survives the No-AI check
+By your fifth or sixth question, say what you're hearing:
+- the real bottleneck
+- which parts an assistant could safely take
+- which parts need a person or a process change
+- any fix that needs no AI (name it now, see [gates.md](gates.md))
 
-1. Which steps of this job could an assistant handle on its own, like a capable new hire? Roughly what share of items is that? (`share_handled`)
-2. If the job loses revenue, what share of that lost revenue could an assistant realistically win back? (`recapture_rate`)
-3. Which steps should wait for someone's say-so? Prompt for money, commitments, safety, and anything they can't undo. For a money step, ask whether they want to approve it every time. If they want a limit, ask what amount they choose. Record `asks_first` and `owner_limits` as described in the gates reference.
-4. Apart from any money action within the limit you set, could you easily undo everything the assistant would do on its own? (`on_own_is_reversible`: yes is `true`.)
-5. Who is the one person who owns this job and approves any asks-first items? (`approver`)
-6. If the assistant misbehaves, how do you switch back to the old way the same day? (`rollback`)
-7. Which tools and records would the assistant have to read or work in? (`tools_needed`) Then ask whether the assistant can get to them and use them as they are (`data_ready`). If the answer is no, ask what's missing (`data_blocker`).
+Tell them what's left: "A few quick questions and I'll give you a one-page summary with the numbers."
 
-Once you've covered the surviving jobs, ask which AI tool, if any, the business already pays for (for example ChatGPT, Microsoft Copilot, Google Gemini or Claude). Record it as `ai_tool`, or `"none"`.
+Then one sweep: "Besides that, is there anything else eating the week, or costing you money when it goes wrong?" Agree on the one or two jobs worth going deeper on. Note any other pains in a line for the report.
 
-Build and run costs (`build_cost`, `monthly_run_cost`) come from the implementer's quote, not from the owner. If there is no quote yet, leave both out.
+## 4. Size the focus jobs
+
+Only for the one or two focus jobs, and only for the kinds of value the story points to. Use a typical week, never a busy week times 52. Note seasonal spikes in `noted_benefits`. Rough is fine; check it back out loud ("so about 2 hours a week?").
+
+**Time back.** How many a week (`weekly_volume`), how many minutes of hands-on work each (`minutes_per_item`; leave out waiting), and how much of that an assistant would remove (`share_handled`).
+- For drafted work, ask: "Once someone checks and sends the draft, how much of those minutes actually goes away?"
+- If the owner does the job, ask what they'd do with the time back. Use a higher `hourly_value` than the staff rate only if all three hold:
+  1. there's real unmet paying work
+  2. the time comes back in usable blocks, not scattered minutes
+  3. the rate is what they *keep* per billable hour after materials and travel, not what they charge
+
+  Otherwise use the staff rate, and put "evenings back" in `noted_benefits`. Record why in `hourly_value_basis`.
+- If someone else does the job, ask their weekly hours too, ideally separately (`hours_claims.owner`, `hours_claims.staff`). When the script flags a gap, treat it as a finding: what is each person counting? Update the claims only when both agree on the same scope. Report it without blaming anyone.
+- The business-wide hourly cost of staff time (wage plus overhead) is `loaded_hourly_cost`. Propose a figure from what they pay and let them correct it.
+
+**Revenue won or kept.** If slow or missed work loses sales: roughly how much a year (`recovered_revenue_annual`), what share of each sale is left after the cost of doing the work (`gross_margin`), and what share an assistant could realistically win back (`recapture_rate`).
+
+**Money not lost.** Write-offs, refunds, chargebacks, scrapped parts, costly mistakes: roughly how much is actually lost a year (`losses_avoided_annual`), and what share the assistant would prevent (`share_avoided`). Use cash actually lost, not list price.
+
+**Noted, not priced.** Anything else that matters to them in their own words: faster replies, reviews, staff stress, evenings back (`noted_benefits`). These are reported, never added to the dollars.
+
+If a kind of value clearly applies but the owner can't estimate it, don't push. Record it in `unpriced_drivers` with the reason (for example `{"revenue": "owner couldn't say how many callers hang up"}`). If records back a money figure, set `money_evidence` to `"records"`.
+
+**Don't count the same money twice:**
+1. If the owner's time is priced at a billable rate, don't also count revenue that would need those same hours.
+2. Rework counted in minutes isn't counted again in money not lost.
+3. A botched order counts as revenue or as money not lost, never both.
+
+Saving labour and winning sales on the same queue are different things, and both count.
+
+## 5. Set up the job they want to pursue
+
+Only for the job the owner wants to go ahead with. Keep it to a few turns.
+
+1. **What it does on its own and where a person takes over.** These are the specific steps.
+2. **For draft-only work, confirm the defaults in one go:** "So it drafts, [approver] checks and sends, nothing goes out on its own, and if it's not working you just stop using it. Anything it should never touch?" This settles `approver`, `on_own_is_reversible`, `rollback` and the never list.
+3. **If money moves or the business commits to something,** those steps go in `asks_first`. Ask whether the owner wants to approve every one, or set a limit they choose (`owner_limits`, see [gates.md](gates.md)). Skip this when no money moves.
+4. **Which tools and records it would work in** (`tools_needed`), and whether it can use them as they are (`data_ready`, `data_blocker`).
+5. **How the business talks to customers, or how internal notes should read** (tone, for the brief).
+6. **Which AI tool, if any, the business already pays for** (`ai_tool`, or `"none"`).
+
+Build and run costs (`build_cost`, `monthly_run_cost`) come from the implementer's quote, not from the owner. With no quote yet, leave both out.
+
+In self-serve mode, with no staff present and no records to hand, don't stall. Say what a staff check or records would change, and carry on.

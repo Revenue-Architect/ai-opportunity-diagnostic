@@ -14,7 +14,9 @@ from profile_csv import profile
 
 ROOT = Path(__file__).resolve().parent.parent
 EXAMPLE = json.loads((ROOT / "assets" / "example-case.json").read_text(encoding="utf-8"))
-CLEAN = EXAMPLE["jobs"][0]  # after-hours inquiries: export evidence, every gate clear
+CLEAN = EXAMPLE["jobs"][0]  # after-hours inquiries: volume from an export, every gate clear
+GATES = {"rule_covers_most": False, "data_ready": True, "on_own_is_reversible": True,
+         "approver": "Owner", "rollback": "Turn it off", "build_cost": 500, "monthly_run_cost": 50}
 
 
 def by_id(report):
@@ -44,17 +46,22 @@ def test_example_outcomes():
 
 def test_example_values():
     jobs = by_id(diagnose(EXAMPLE))
-    # 40 x 6 min = 4 h/wk; 4 x 52 x 45 x 0.7 = 6552 labour; 60000 x 0.4 x 0.3 = 7200 revenue;
-    # export weight 1.0; minus 1800 run and 3000 build.
+    # Time: 40 x 6 min = 4 h/wk; 4 x 52 x 45 x 0.7 = 6552, volume from an export so counted at 1.0.
+    # Revenue: 60000 x 0.4 x 0.3 = 7200, an estimate so counted at 0.65 = 4680.
+    # 6552 + 4680 = 11232; minus 1800 run and 3000 build = 6432.
     a = jobs["after_hours_inquiries"]
-    assert (a["annual_labour_value"], a["annual_revenue_value"], a["net_first_year"]) == (6552, 7200, 8952)
+    assert a["values"] == {"time": 6552, "revenue": 7200}
+    assert (a["weights"], a["year_one_value"], a["net_first_year"]) == (
+        {"time": 1.0, "revenue": 0.65}, 11232, 6432)
+    # Owner and staff agree (no export): time at 0.85 = 5569.2; + 4680 - 4800 = 5449.
     estimate = run(job(evidence=None, hours_claims={"owner": 4, "staff": 4}))["jobs"][0]
-    assert (estimate["evidence"], estimate["net_first_year"]) == ("owner_and_staff", 6889)
-    # Owner says 3 h, staff say 6 h: a 0.5 gap is conflicting, valued as a single estimate (0.65).
-    # (20 x 10 / 60) x 52 x 45 x 0.8 = 6240; x 0.65 = 4056; - 600 - 1000 = 2456.
+    assert (estimate["evidence"], estimate["net_first_year"]) == ("owner_and_staff", 5449)
+    # Owner says 3 h, staff say 6 h: conflicting, valued as a single estimate (0.65).
+    # Time (20 x 10 / 60) x 52 x 45 x 0.8 = 6240; losses 4000 x 0.5 = 2000.
+    # (6240 + 2000) x 0.65 = 5356; minus 600 run and 1000 build = 3756.
     i = jobs["invoice_chasing"]
     assert (i["evidence"], i["claim_gap"], i["year_one_value"], i["net_first_year"]) == (
-        "conflicting", 0.5, 4056, 2456)
+        "conflicting", 0.5, 5356, 3756)
 
 
 def test_ranking():
@@ -89,7 +96,7 @@ def test_trap_owner_staff_gap_loses_to_the_verified_job():
     returns = job(id="returns", name="Returns triage", evidence=None, weekly_volume=150,
                   minutes_per_item=14, hours_claims={"owner": 35, "staff": 6})
     freight = job(id="freight", name="Freight bill reconciliation", weekly_volume=112,
-                  minutes_per_item=15, recovered_revenue_annual=0)
+                  minutes_per_item=15, recovered_revenue_annual=None)
     report = run(returns, freight)
     jobs = by_id(report)
     assert jobs["returns"]["evidence"] == "conflicting" and jobs["returns"]["claim_gap"] == 0.829
@@ -117,15 +124,75 @@ def test_not_yet_when_nothing_clears():
                  job(id="c", data_ready=False))
     assert report["recommended"] == []
     assert [j["outcome"] for j in report["jobs"]] == ["Not AI", "Not worth it", "Not ready"]
-    assert "quadrantChart" in to_markdown(report)
 
 
 def test_no_quote_reports_the_most_a_build_can_cost():
     j = run(job(build_cost=None, monthly_run_cost=None))["jobs"][0]
-    # 6552 + 7200 at export weight 1.0 = 13752 a year.
-    assert j["outcome"] == "Not ready" and "$13,752" in j["reason"] and "net_first_year" not in j
-    md = to_markdown(run(job(build_cost=None, monthly_run_cost=None)))
-    assert "needs quote" in md and "quadrantChart" not in md and "not charted" in md
+    assert j["outcome"] == "Not ready" and "net_first_year" not in j
+    assert "total first-year cost" in j["reason"] and "$11,232" in j["reason"]
+    assert "needs quote" in to_markdown(run(job(build_cost=None, monthly_run_cost=None)))
+
+
+# --- Value model ----------------------------------------------------------------
+
+def test_export_proves_volume_only():
+    # The export lifts time to full weight; money estimates stay at 0.65 unless backed by records.
+    assert run(CLEAN)["jobs"][0]["weights"] == {"time": 1.0, "revenue": 0.65}
+    with_records = run(job(money_evidence="records"))["jobs"][0]
+    assert (with_records["weights"]["revenue"], with_records["year_one_value"]) == (1.0, 13752)
+
+
+def test_export_does_not_settle_conflicting_hours():
+    j = run(job(hours_claims={"owner": 35, "staff": 6}))["jobs"][0]
+    assert j["evidence"] == "conflicting" and j["weights"]["time"] == 0.65
+    assert j["outcome"] == "Not ready" and "reconcile what each is counting" in j["reason"]
+
+
+def test_owner_hourly_value_overrides_staff_rate():
+    j = run(job(hourly_value=90, hourly_value_basis="net margin per billable hour"))["jobs"][0]
+    assert j["values"]["time"] == 13104  # 4 h/wk x 52 x 90 x 0.7
+    assert "net margin per billable hour" in to_markdown(run(job(hourly_value=90,
+                                                                 hourly_value_basis="net margin per billable hour")))
+
+
+def test_revenue_only_job_needs_no_time_fields_or_hourly_cost():
+    hangups = dict(GATES, id="hangups", name="Callers who hang up",
+                   recovered_revenue_annual=20000, gross_margin=0.5, recapture_rate=0.2)
+    j = diagnose({"jobs": [hangups]})["jobs"][0]
+    # 20000 x 0.5 x 0.2 = 2000 at 0.65 = 1300; minus 600 run and 500 build = 200.
+    assert (j["values"], j["net_first_year"], j["outcome"]) == ({"revenue": 2000}, 200, "Go")
+
+
+def test_losses_only_job():
+    refunds = dict(GATES, id="refunds", name="Wrong-size refunds",
+                   losses_avoided_annual=4000, share_avoided=0.5)
+    estimate = diagnose({"jobs": [refunds]})["jobs"][0]
+    records = diagnose({"jobs": [dict(refunds, money_evidence="records")]})["jobs"][0]
+    assert (estimate["values"], estimate["year_one_value"], records["year_one_value"]) == (
+        {"losses": 2000}, 1300, 2000)
+
+
+def test_unpriced_and_noted_are_shown_not_added():
+    j = job(recovered_revenue_annual=None, unpriced_drivers={"revenue": "owner couldn't estimate"},
+            noted_benefits=["Evenings back"])
+    report = run(j)
+    assert report["jobs"][0]["year_one_value"] == 6552
+    md = to_markdown(report)
+    assert "Revenue won or kept: not priced (owner couldn't estimate)" in md
+    assert "Also: Evenings back (not priced)" in md
+
+
+def test_nothing_priced_is_not_ready():
+    bare = dict(GATES, id="bare", name="Something vague",
+                unpriced_drivers={"revenue": "owner couldn't estimate"})
+    j = diagnose({"jobs": [bare]})["jobs"][0]
+    assert j["outcome"] == "Not ready" and j["reason"].startswith("value: no driver priced yet")
+
+
+def test_value_breakdown_wording():
+    md = to_markdown(run(CLEAN))
+    assert "Time back: $6,552 a year (4.0 h/week at $45/h), counted at 100%" in md
+    assert "Revenue won or kept: $7,200 a year, counted at 65%" in md
 
 
 # --- Input checks and output ----------------------------------------------------
@@ -175,14 +242,18 @@ def test_markdown_table_and_chart():
     assert r"Title checks (new): A \| B" in table
     assert '"Title checks new A B - Go": [' in chart
     assert "Appointment reminders" in table and "Appointment reminders" not in chart
-    assert table.index("Quote drafting") < table.index("Overdue invoice chasing")
+    assert table.index("| Quote drafting") < table.index("| Overdue invoice chasing")
 
 
-def test_chart_ease_does_not_depend_on_other_jobs():
-    alone = to_markdown(run(job(build_cost=500)))
-    with_bigger = to_markdown(run(job(build_cost=500), job(id="big", build_cost=9000)))
+def test_chart_needs_two_quoted_jobs():
+    assert "quadrantChart" not in to_markdown(run(CLEAN))
+    assert "quadrantChart" in to_markdown(run(CLEAN, job(id="b")))
+
+
+def test_chart_position_does_not_depend_on_other_jobs():
     point = '"After-hours inquiries - Go": [0.96, 0.98]'
-    assert point in alone and point in with_bigger
+    assert point in to_markdown(run(job(build_cost=500), job(id="mid", build_cost=1000)))
+    assert point in to_markdown(run(job(build_cost=500), job(id="big", build_cost=9000)))
 
 
 # --- CSV profiler ---------------------------------------------------------------
