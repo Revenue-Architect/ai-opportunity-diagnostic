@@ -35,4 +35,4 @@ If someone else does the job, ask for their weekly hours estimate too, ideally i
 6. If the assistant misbehaves, how do you switch back to the old way the same day? (`rollback`)
 7. Where do you keep the records? Then ask whether the assistant can get to them and use them as they are (`data_ready`). If the answer is no, ask what's missing (`data_blocker`).
 
-Build and run costs (`build_cost`, `monthly_run_cost`) come from the implementer's quote, not from the owner.
+Build and run costs (`build_cost`, `monthly_run_cost`) come from the implementer's quote, not from the owner. If there is no quote yet, leave both out.

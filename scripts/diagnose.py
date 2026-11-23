@@ -19,11 +19,12 @@ WEEKS_PER_YEAR = 52
 CLAIM_GAP_LIMIT = 0.25
 
 # How much of the claimed value to trust, by the strongest evidence behind it.
+# Conflicting owner and staff claims are valued as a single estimate and block Go
+# until records settle the gap.
 EVIDENCE_WEIGHT = {
-    "export": 1.00,           # volume counted from 30 days of real records
+    "export": 1.00,           # volume counted from real records
     "owner_and_staff": 0.85,  # both gave hours and they agree
     "single_estimate": 0.65,  # one person's estimate
-    "conflicting": 0.50,      # owner and staff disagree and no export settles it
 }
 
 NOT_AI, NOT_WORTH_IT, NOT_READY, GO = "Not AI", "Not worth it", "Not ready", "Go"
@@ -84,10 +85,8 @@ def assess(job, loaded_hourly_cost):
                    * _num(job, "recapture_rate", 0, 1))
 
     level, claim_gap = evidence_level(job)
-    weight = EVIDENCE_WEIGHT[level]
-    run_annual = _num(job, "monthly_run_cost") * 12
-    build = _num(job, "build_cost")
-    net = (labour + revenue) * weight - run_annual - build
+    weight = EVIDENCE_WEIGHT["single_estimate" if level == "conflicting" else level]
+    year_value = (labour + revenue) * weight
 
     result.update(
         hours_per_week=round(hours_per_week, 2),
@@ -96,16 +95,26 @@ def assess(job, loaded_hourly_cost):
         evidence=level,
         evidence_weight=weight,
         claim_gap=claim_gap,
-        build_cost=round(build),
-        annual_run_cost=round(run_annual),
-        net_first_year=round(net),
+        year_one_value=round(year_value),
     )
 
-    if net <= 0:
-        result.update(outcome=NOT_WORTH_IT, reason="does not pay back its build and run cost within a year")
-        return result
-
     blockers = []
+    quoted = job.get("build_cost") is not None and job.get("monthly_run_cost") is not None
+    if quoted:
+        build = _num(job, "build_cost")
+        run_annual = _num(job, "monthly_run_cost") * 12
+        net = year_value - run_annual - build
+        result.update(build_cost=round(build), annual_run_cost=round(run_annual), net_first_year=round(net))
+        if net <= 0:
+            result.update(outcome=NOT_WORTH_IT, reason="does not pay back its build and run cost within a year")
+            return result
+    else:
+        blockers.append(f"quote: pays back if the build plus a year of running costs stays under ${round(year_value):,}")
+
+    if level == "conflicting":
+        claims = job["hours_claims"]
+        blockers.append(f"hours: owner says {claims['owner']} a week, staff say {claims['staff']}; "
+                        "settle it with real records")
     for field in ("data_ready", "on_own_is_reversible"):
         if field in job and not isinstance(job[field], bool):
             raise InputError(f"job '{job['id']}': '{field}' must be true or false")
@@ -149,12 +158,15 @@ def _label(text):
 
 
 def quadrant_chart(results):
-    """Value (net first year) against ease (lower build cost). Not AI jobs are left out."""
-    scored = [r for r in results if r["outcome"] != NOT_AI]
+    """Value per year against ease, for jobs that have a quote.
+
+    Ease is the share of a year's value left after paying for the build, so it does not
+    depend on the other jobs. Value is scaled to the most valuable charted job.
+    """
+    scored = [r for r in results if "build_cost" in r]
     if not scored:
         return ""
-    top_value = max(max(r["net_first_year"] for r in scored), 1)
-    top_build = max(max(r["build_cost"] for r in scored), 1)
+    top_value = max(max(r["year_one_value"] for r in scored), 1)
     lines = [
         "quadrantChart",
         "  title Value vs ease",
@@ -166,8 +178,8 @@ def quadrant_chart(results):
         "  quadrant-4 Lower value and easier",
     ]
     for r in scored:
-        x = round(1 - r["build_cost"] / top_build, 2)
-        y = round(max(r["net_first_year"], 0) / top_value, 2)
+        x = round(1 - min(r["build_cost"] / max(r["year_one_value"], 1), 1), 2)
+        y = round(r["year_one_value"] / top_value, 2)
         x, y = min(max(x, 0.02), 0.98), min(max(y, 0.02), 0.98)
         label = _label(r["name"] + " - " + r["outcome"])
         lines.append(f'  "{label}": [{x}, {y}]')
@@ -175,19 +187,26 @@ def quadrant_chart(results):
 
 
 def to_markdown(report):
-    rows = ["| Rank | Job | Outcome | Net first year | Evidence | Why |", "|---|---|---|---|---|---|"]
-    for r in sorted(report["jobs"], key=lambda r: r.get("net_first_year", float("-inf")), reverse=True):
+    rows = ["| Rank | Job | Outcome | Value per year | Net first year | Evidence | Why |",
+            "|---|---|---|---|---|---|---|"]
+    for r in sorted(report["jobs"], key=lambda r: r.get("year_one_value", float("-inf")), reverse=True):
+        value = f"${r['year_one_value']:,}" if "year_one_value" in r else "–"
         net = "–"
         if "net_first_year" in r:
             n = r["net_first_year"]
             net = f"{'-' if n < 0 else ''}${abs(n):,}"
+        elif "year_one_value" in r:
+            net = "needs quote"
         evidence = r.get("evidence", "–").replace("_", " ")
-        cells = [r.get("rank", ""), r["name"], r["outcome"], net, evidence, r["reason"]]
+        cells = [r.get("rank", ""), r["name"], r["outcome"], value, net, evidence, r["reason"]]
         cells = [" ".join(str(cell).splitlines()).replace("|", r"\|") for cell in cells]
         rows.append("| " + " | ".join(cells) + " |")
     chart = quadrant_chart(report["jobs"])
     title = f"## {report['business']}\n\n" if report.get("business") else ""
-    return title + "\n".join(rows) + (f"\n\n```mermaid\n{chart}\n```\n" if chart else "\n")
+    out = title + "\n".join(rows) + (f"\n\n```mermaid\n{chart}\n```\n" if chart else "\n")
+    if any("year_one_value" in r and "net_first_year" not in r for r in report["jobs"]):
+        out += "\nJobs without a quote are not charted.\n"
+    return out
 
 
 def main(argv):

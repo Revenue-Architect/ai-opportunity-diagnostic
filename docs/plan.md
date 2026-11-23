@@ -18,8 +18,12 @@ A single Agent Skill with no server. It runs on the client's own AI account, and
   - that total × the evidence weight, minus first-year run and build cost
 
   It sorts each job into Not AI / Not worth it / Not ready (with blockers) / Go, ranks the Go jobs, and prints a table and a Mermaid quadrant chart.
+  - No quote yet: the job is Not ready with a `quote:` blocker naming the most a build could cost and still pay back in year one, so an owner can run it alone.
+  - Owner and staff hours that conflict: valued as a single estimate and Not ready until records settle the gap.
+- `scripts/profile_csv.py` (standard library, runs locally) counts weekly volume, date span and blank share per column from a CSV export, so the model never counts records in prose.
 - Owner limits: money actions ask first by default. The owner may let one run on its own up to an amount they name.
-- `scripts/test_diagnose.py` holds plain-assert checks on a made-up example business.
+- `scripts/test_diagnose.py` holds 18 plain-assert checks: the made-up example, the blueprint's five trap cases, a "not yet" case, a no-quote case and the CSV profiler.
+- [behaviour-checklist.md](behaviour-checklist.md) is a manual check of triggering and interview behaviour, to run whenever the instructions change.
 
 ## How v1 differs from the blueprint, and why
 
@@ -31,7 +35,8 @@ A single Agent Skill with no server. It runs on the client's own AI account, and
 | Exec-vs-frontline delta with 4 evidence tiers | Same idea, simpler: export / agree / single estimate / conflicting | Kept the insight and dropped the extra flags. |
 | Four mandatory diagrams | Quadrant chart (generated), before/after flow for the chosen job, roadmap table | Enough to support the decision. |
 | Single approver, forbidden actions, rollback | Approver, asks-first, owner limits, rollback, Never list | Matches "asks before money moves". |
-| 5 synthetic trap fixtures | 1 made-up example; real cases to be added | Fixtures should come from real diagnostics. |
+| 5 synthetic trap fixtures | The 5 traps plus "not yet" and no-quote, as script tests; real cases to be added | Traps guard the rules; calibration comes from real diagnostics. |
+| CSV evidence profiler (server-side) | Local `profile_csv.py` | No client data leaves the machine. |
 | Remote MCP server, state store, auth, Skills over MCP, ui:// workbench, dual-era elicitation | Not built | See the roadmap triggers below. |
 | Lite / Pro split | Not built | No vertical packs exist yet, so there is nothing to split. |
 
@@ -39,35 +44,20 @@ A single Agent Skill with no server. It runs on the client's own AI account, and
 
 Each step starts when its trigger happens, not by calendar.
 
-1. **First real diagnostics (next).** Run the Skill with 2–3 real businesses. Save each anonymized input file as a test case. Calibrate `CLAIM_GAP_LIMIT` and `EVIDENCE_WEIGHT` against what the exports show.
+1. **First real diagnostics (next).** Run the Skill with 2–3 real businesses. Save each anonymized input file as a test case. Use these runs to fix interview friction and missing questions. Leave `CLAIM_GAP_LIMIT` and `EVIDENCE_WEIGHT` alone until about 10 diagnostics and their day-30 results are in, to avoid overfitting to two businesses.
 2. **Day-30 check on each Go pilot.** Compare predicted weekly volume and hours back against the assistant's real logs. Change the interview or weights where predictions miss.
-3. **Vertical notes.** Add `references/verticals/<vertical>.md` after the first real client in that vertical. The trades and e-commerce lists in the blueprint are the starting candidates.
-4. **Lite / Pro split.** Do this once a vertical note exists that is worth charging for. A build flag on the same folder decides whether vertical notes are included.
+3. **Vertical notes.** Draft `references/verticals/<vertical>.md` after the first real client in that vertical. The trades and e-commerce lists in the blueprint are the starting candidates.
+4. **Lite / Pro split.** Do this only after 3–5 clients in one vertical and evidence that owners will pay for the Skill itself rather than hiring agenticworks.ca. A build flag on the same folder decides whether vertical notes are included.
 5. **MCP server.** Build it when a paying client needs one of the following:
-   - audit state across sessions or devices beyond the JSON file
-   - read-only probes into their CRM, ERP or helpdesk
-   - the methodology in a host that can't run Skills
+   - read-only probes into their CRM, ERP or helpdesk (for example Jobber, Shopify, QuickBooks, Zendesk), because manual exports are blocking quarterly re-runs
+   - the methodology in a host that can't run Skills or local scripts
 
-   Start with the smallest server that meets that need. Check every version and protocol claim from the blueprint against official docs first.
-6. **Interactive workbench (MCP App).** Only after the MCP server exists and clients ask to adjust results themselves.
+   Sharing the JSON file across devices is not a trigger; a shared folder handles that. Start with the smallest server: a scoring tool wrapping `diagnose.py`, plus one read-only summary probe (counts and blank shares, never raw rows) for the client's actual software. Pin FastMCP 4.2.4 or newer, and check protocol details against official docs at that time.
+6. **Interactive surface (MCP App).** Only after the MCP server exists and clients ask for it. Make it a scope and approver sign-off sheet (asks first, owner limits, approver, rollback), not weight sliders.
 
-## Proposed changes from the independent review (awaiting Kamran's decision)
+## Changes from the independent review (applied 2026-11-22)
 
-The 2026-11-22 Gemini review ([reviews/2026-11-22-gemini-plan-review.md](reviews/2026-11-22-gemini-plan-review.md)) agrees with this plan and with deferring MCP. It proposes a "Step 0" before the first real client or a public release. Claude's view is noted on each item.
-
-1. **Self-serve without a quote.** The script requires `build_cost` and `monthly_run_cost`, which only the implementer can supply, so an owner running it alone stalls. Proposal: when costs are missing, report the most a build could cost and still pay back in year one, and point to agenticworks.ca for a quote. *Claude: agree. It's small and needed for a lead magnet.*
-2. **Conflicting owner/staff hours should not reach Go.** The example's invoice chasing has a 50% gap and still ranks #2. Proposal: a conflicting gap becomes a Not ready blocker until records settle it. *Claude: agree. It's simpler than discounting by 0.5 and fixes the double discount Gemini points out.*
-3. **Local CSV profiler.** Stage 4 asks the model to count records and divide in prose, which breaks the no-math-in-prose rule. Proposal: a small stdlib `scripts/profile_csv.py` (row count, date span, weekly volume, blank rate per column). *Claude: agree.*
-4. **Trap fixtures and behaviour checks.** Add the blueprint's five trap cases plus a "not yet" case as script tests, and a short manual checklist for agent behaviour (one question at a time, pushes back on rule-based jobs, triggers correctly). *Claude: agree on fixtures; keep the behaviour check a short manual checklist.*
-5. **Small fixes.** Quadrant x-axis scaling for one or two jobs, and a one-line next step to agenticworks.ca in the report. *Claude: agree.*
-
-Roadmap changes it proposes:
-- Don't tune `EVIDENCE_WEIGHT` or `CLAIM_GAP_LIMIT` until about 10 diagnostics; use the first 2–3 to fix the interview.
-- Draft vertical notes after client #1, but split Lite/Pro only after 3–5 clients in one vertical and evidence that owners will pay for the Skill itself.
-- Drop "audit state across devices" as an MCP trigger, since a shared folder handles that.
-- If a UI is ever built, make it a scope and approver sign-off sheet, not weight sliders.
-
-*Claude: agree with all four.* None of these are applied yet.
+The 2026-11-22 Gemini review ([reviews/2026-11-22-gemini-plan-review.md](reviews/2026-11-22-gemini-plan-review.md)) agreed with this plan and with deferring MCP. Its five fixes before the first real client are applied: runs without a quote, conflicting hours blocking Go, the local CSV profiler, trap tests plus a behaviour checklist, and chart scaling plus a next step to agenticworks.ca. Its roadmap changes are folded into the roadmap above.
 
 ## Open questions
 
@@ -79,4 +69,4 @@ Roadmap changes it proposes:
 
 - 2026-11-22: Gemini 4 Neon High reviewed and polished the built Skill (18 fixes).
 - 2026-11-22: Codex GPT-6.2-Astra reviewed and polished it. Most fixes were kept; Fraction math was dropped.
-- 2026-11-22: Gemini 4 Neon High independently reviewed this plan against the blueprint. Verdict: agree, with the changes above. It also verified the blueprint's technical claims. See [reviews/](reviews/).
+- 2026-11-22: Gemini 4 Neon High independently reviewed this plan against the blueprint. Verdict: agree, with five fixes, all since applied. It also verified the blueprint's technical claims. See [reviews/](reviews/).

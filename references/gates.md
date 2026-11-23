@@ -16,6 +16,8 @@ When in doubt, write the rule out. If you can't write it in a few lines, it's pr
 
 `false` when the information it needs is missing, scattered across places with no access, or too messy to act on (for example, many blank job types or free-text part numbers). Fill `data_blocker` with what is missing or unusable.
 
+When you have an export, look at the `blank_share` from `scripts/profile_csv.py` for the columns the assistant would rely on, and quote the share in `data_blocker` (for example, "job type blank on 47% of past jobs").
+
 ## `on_own_is_reversible`: is everything it does alone easy to undo?
 
 By default, put every money-moving or irreversible step in `asks_first`, along with binding commitments and safety decisions. Drafting a reply is easy to undo. A customer may already have acted on a sent reply.

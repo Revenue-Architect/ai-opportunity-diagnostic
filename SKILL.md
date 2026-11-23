@@ -3,7 +3,7 @@ name: ai-opportunity-diagnostic
 description: Interview a small-business owner to decide whether an AI assistant would pay for itself, which jobs it could handle, and what it must ask about first. Use when an owner asks "where could AI save us time?" or "should we get an AI assistant?", or someone says "run an AI assessment", "audit our workflows for AI" or "map AI use cases", or a consultant wants to rank a client's AI opportunities before a pilot. Not for building or configuring the assistant, writing a general AI strategy, or reviewing code.
 metadata:
   author: agenticworks.ca
-  version: "0.1"
+  version: "0.2"
 ---
 
 # AI opportunity diagnostic
@@ -28,11 +28,17 @@ The decision this serves: **should this business get an AI assistant now, and if
    ```
 
    Use [assets/example-case.json](assets/example-case.json) for the input format. For estimates, omit `evidence`. The script uses `hours_claims` to distinguish one estimate, agreement and disagreement. It assigns **Not AI**, **Not worth it**, **Not ready** (with its blockers) or **Go**, ranks the Go jobs, and charts the scored jobs.
-4. **Evidence.** Take the first three scored rows in the table, or all scored rows if there are fewer. Ask for 30 days of records for each (inquiries, bookings, invoices or orders). Count the items for that job and set `weekly_volume` to the count × 7 / 30. Mark that job's `evidence` as `"export"` only after updating its volume. If records are unavailable, keep the estimate and say so. Re-score once after this pass.
+4. **Evidence.** Take the first three scored rows in the table, or all scored rows if there are fewer. Ask for about 30 days of records for each as a CSV export (inquiries, bookings, invoices or orders), plus records for any job blocked by an owner/staff hours gap. Profile each one on this machine:
+
+   ```
+   python scripts/profile_csv.py <export.csv> --date <date column> [--where <column>=<value>]
+   ```
+
+   Copy its `weekly_volume` into the job and set `"evidence": "export"`. Use its blank shares when deciding `data_ready` (see [references/gates.md](references/gates.md)). If records are unavailable, keep the estimate and say so. Re-score once after this pass.
 5. **Case against.** Write the strongest case for passing on the highest-ranked Go job. If it wins, explain why and consider the next Go job the same way. If none stands up, recommend "not yet".
 6. **Report.** Fill [references/report.md](references/report.md).
 
-If the business has no Go jobs, the report says so and lists what would change that (usually the Not ready blockers).
+If the business has no Go jobs, the report says so and lists what would change that (usually the Not ready blockers). Without an implementer's quote, every job that would otherwise go ahead is Not ready with a `quote:` blocker naming the most a build could cost and still pay back.
 
 ## Re-running
 
