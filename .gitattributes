@@ -1,1 +1,4 @@
 * text=auto eol=lf
+docs/ export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
