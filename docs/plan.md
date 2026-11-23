@@ -51,6 +51,24 @@ Each step starts when its trigger happens, not by calendar.
    Start with the smallest server that meets that need. Check every version and protocol claim from the blueprint against official docs first.
 6. **Interactive workbench (MCP App).** Only after the MCP server exists and clients ask to adjust results themselves.
 
+## Proposed changes from the independent review (awaiting Kamran's decision)
+
+The 2026-11-22 Gemini review ([reviews/2026-11-22-gemini-plan-review.md](reviews/2026-11-22-gemini-plan-review.md)) agrees with this plan and with deferring MCP. It proposes a "Step 0" before the first real client or a public release. Claude's view is noted on each item.
+
+1. **Self-serve without a quote.** The script requires `build_cost` and `monthly_run_cost`, which only the implementer can supply, so an owner running it alone stalls. Proposal: when costs are missing, report the most a build could cost and still pay back in year one, and point to agenticworks.ca for a quote. *Claude: agree. It's small and needed for a lead magnet.*
+2. **Conflicting owner/staff hours should not reach Go.** The example's invoice chasing has a 50% gap and still ranks #2. Proposal: a conflicting gap becomes a Not ready blocker until records settle it. *Claude: agree. It's simpler than discounting by 0.5 and fixes the double discount Gemini points out.*
+3. **Local CSV profiler.** Stage 4 asks the model to count records and divide in prose, which breaks the no-math-in-prose rule. Proposal: a small stdlib `scripts/profile_csv.py` (row count, date span, weekly volume, blank rate per column). *Claude: agree.*
+4. **Trap fixtures and behaviour checks.** Add the blueprint's five trap cases plus a "not yet" case as script tests, and a short manual checklist for agent behaviour (one question at a time, pushes back on rule-based jobs, triggers correctly). *Claude: agree on fixtures; keep the behaviour check a short manual checklist.*
+5. **Small fixes.** Quadrant x-axis scaling for one or two jobs, and a one-line next step to agenticworks.ca in the report. *Claude: agree.*
+
+Roadmap changes it proposes:
+- Don't tune `EVIDENCE_WEIGHT` or `CLAIM_GAP_LIMIT` until about 10 diagnostics; use the first 2–3 to fix the interview.
+- Draft vertical notes after client #1, but split Lite/Pro only after 3–5 clients in one vertical and evidence that owners will pay for the Skill itself.
+- Drop "audit state across devices" as an MCP trigger, since a shared folder handles that.
+- If a UI is ever built, make it a scope and approver sign-off sheet, not weight sliders.
+
+*Claude: agree with all four.* None of these are applied yet.
+
 ## Open questions
 
 - Is the evidence weighting (1.0 / 0.85 / 0.65 / 0.5) right? It needs real cases.
@@ -61,4 +79,4 @@ Each step starts when its trigger happens, not by calendar.
 
 - 2026-11-22: Gemini 4 Neon High reviewed and polished the built Skill (18 fixes).
 - 2026-11-22: Codex GPT-6.2-Astra reviewed and polished it. Most fixes were kept; Fraction math was dropped.
-- 2026-11-22: Gemini 4 Neon High independently reviewed this plan against the blueprint. See [reviews/](reviews/).
+- 2026-11-22: Gemini 4 Neon High independently reviewed this plan against the blueprint. Verdict: agree, with the changes above. It also verified the blueprint's technical claims. See [reviews/](reviews/).

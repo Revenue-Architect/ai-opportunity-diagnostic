@@ -1,6 +1,6 @@
 # Original blueprint (V1 + V2), as written by Kamran on 2026-11-22
 
-Kept verbatim for reference. The math formulas were lost when the text was pasted, and the "click any node" references point to interactive diagrams that were not saved. The technical claims about FastMCP 4.2.0, SEP-2640, SEP-2322, SEP-1865, VS Code 1.147 and the Mermaid MCP URL have not been verified. See [plan.md](plan.md) for what was built and why.
+Kept verbatim for reference. The math formulas were lost when the text was pasted, and the "click any node" references point to interactive diagrams that were not saved. The technical claims (FastMCP 4.2.0, SEP-2640, SEP-2322, SEP-1865, VS Code 1.147, the Mermaid MCP URL) were checked on 2026-11-22 and are real; see [reviews/2026-11-22-gemini-plan-review.md](reviews/2026-11-22-gemini-plan-review.md). FastMCP 4.2.0 and VS Code 1.147 were confirmed at their primary sources. FastMCP's latest release is 4.2.4, which includes an OAuth security fix, so pin that or newer rather than 4.2.0. See [plan.md](plan.md) for what was built and why.
 
 ---
 
