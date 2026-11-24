@@ -1,80 +1,44 @@
-# Report template
+# Diagnostic report and build brief
 
-Plain words for an owner. Numbers come from the script output, quoted as given.
+Produce two separate documents under `$HERMES_HOME/workspace/diagnostic/<business-slug>/`: `<YYYY-MM-DD>-owner-report.md` and `<YYYY-MM-DD>-build-brief.md`. Keep the input file beside them. The owner report starts as an unsent draft. The build brief, input, raw scorer output and client-specific implementation material stay with Agentic Works. This public repository holds blank templates only. Never commit completed briefs, reports, source records, credentials or internal pricing material.
 
-Fit the length to the conversation. If the answer is a no-AI fix or "not yet", sections 1, 2, 5 and 6 are enough, and a few lines each is fine.
+## Owner report
 
-## 1. The answer
+Build the report from the allowed fields below, not by redacting the build brief. Use plain language, no em dashes, and say “AI employee” or “your assistant,” not the software underneath. Don't include prices, payback ceilings, net first-year value, cost charts, delivery dates, booking links, raw input or output, internal links, or a build recipe. That's also the boundary for the live interview, follow-up chat and anything the customer might paste into their own AI. Do not give their AI internal files or instructions and rely on a prompt to hide them.
 
-Answer the problem the owner came with, in their words. Name the job to start with, the no-AI fix, or "not yet", and why. If what they asked for isn't the right move, say so plainly and say what would be. If the case against a higher-ranked job won, give that reason here.
+### 1. The answer
 
-## 2. All jobs
+In the owner's words, name the job to start with, the no-AI fix, or “not yet,” and why. If the case against a higher-ranked job won, say why. Explain the finding when asked rather than withholding it.
 
-Paste the script's table, its "Where the value comes from" breakdown, and the chart if there is one. Add one line per job in owner words: what you found and why it landed where it did. For **Not AI** jobs, name the fix they can set up without us. Mention in a line any other pains the owner raised that weren't scored.
+### 2. All scored jobs
 
-## 3. The recommended job
+| Job | Where it landed | Estimated first-year value before costs | Why |
+|---|---|---|---|
 
-If the answer is "not yet", skip sections 3 and 4. Otherwise describe the Go job you recommend.
+Use the scorer's value as printed, not ROI or a savings promise. Use a dash or “not estimated” when the scorer has no value. Explain which inputs came from records and which are estimates; an export may confirm volume without confirming minutes or shares. If you show the value drivers, say which amounts are before evidence adjustments and explain the adjustment in plain words so the components don't appear to add up to the adjusted total. Don't recompute or round the figures yourself. For **Not AI**, give the concrete fix and point to verified help for the tool they already use, without a setup walkthrough. Mention significant unscored pains separately.
 
-### Assistant brief
+### 3. The recommended job
 
-Write this as a block of plain text the owner can copy. Address it to the assistant ("You are…"). It must work in any AI tool, so no tool-specific features or formatting.
+Include only for a recommended **Go** job. Describe the outcomes, what decisions stay with people, how staff can switch back the same day, the strongest argument against the recommendation and why it didn't win, and two or three things the owner could check after a pilot. Keep staff concerns anonymous. If a diagram helps, show the decision and hold points: an item needing approval stays on hold unless the approver agrees. Don't expose prompts, implementation steps, exact approval thresholds, tool wiring, field mappings or test cases.
 
-```
-You are the [job] assistant for [business]. [One sentence on what the business does.]
+### 4. Illustrative 90-day outline
 
-You handle on your own:
-- [specific tasks]
-- [for each owner_limits entry, if any: "[action] up to and including $X"]
+Only for a recommended **Go** job. Use outcome milestones and decisions, not an implementation checklist or promised dates. Start with a small pilot; continue or expand only if the owner agrees after reviewing the results.
 
-You ask [approver] and wait for their OK before you:
-- [each action from asks_first, which already includes any owner_limits action over $X]
-- anything not listed above, or any case where you are unsure
+### 5. What would change the answer
 
-You never:
-- [anything it must not touch]
+Translate each blocker into the owner's language and name what would clear it. If a quote is the only blocker, say “Worth a closer look; needs a quote.” If there are additional blockers, name them too. Do not disclose the internal ceiling. If this is a no-AI or “not yet” answer, sections 1, 2, 5 and 6 can be brief.
 
-You work in: [tools_needed]
-Your tone: [how the business talks to customers, or how internal notes should read, in the owner's words]
-```
+### 6. Next step and send check
 
-**Where it goes:** one line for the client's `ai_tool`. They can paste the brief into a project or custom assistant in that tool and try it by hand; connecting it to their tools is part of the build. Point them to that tool's help pages rather than giving setup steps (see the "decide, don't configure" rule in SKILL.md). If `ai_tool` is `"none"`, say agenticworks.ca can set one up on an account in their name.
+For an owner-prioritized Go job or one that only needs a quote, offer a short scoping conversation with Kamran at Agentic Works. Don't promise a pilot for a quote-only job. Otherwise give the next useful action the owner can take, and don't pitch work they didn't ask for. For requests for exact prompts or setup, offer to scope the build while still answering questions about findings, rationale and no-AI alternatives.
 
-### For the owner
+Run the owner draft through `humanizer`, then check it for leaked prompts, internal costs, raw output, technical build detail and internal links. Send only the owner report and only after Kamran explicitly approves the exact recipient(s) and final text. Never send or attach the build brief, input or raw output.
 
-- **How to switch back:** what the team would do the same day.
-- **Value:** the script's net first-year value and where it comes from, plus the benefits the owner named that aren't priced.
-- **Case against:** the strongest reason not to do it, and why it doesn't win. Include any staff concerns, without names, and how staff will be involved in the pilot.
-- **When to stop the pilot:** two or three things the owner can check on day 30. For example, agree how many items a week the assistant should finish without help.
+## Build brief (internal only)
 
-Then a before/after flow:
+Use this as the handoff to `strategy-call`. Include the business, date, owner report path, input path, recommended job or reason to stop, outcome, evidence level, first-year value, net first year (if scored), and the scorer's first-year break-even threshold (if printed, otherwise N/A). The threshold is a fit check for build plus a year of running costs, not a quote or a standalone build budget.
 
-```mermaid
-flowchart LR
-  subgraph Before
-    A1[Inquiry arrives] --> A2[Waits for staff] --> A3[Staff replies]
-  end
-  subgraph After
-    B1[Inquiry arrives] --> B2[Assistant drafts reply] --> B3{Asks first?}
-    B3 -- no --> B4[Assistant sends]
-    B3 -- yes --> B5{Approver agrees?}
-    B5 -- yes --> B4
-    B5 -- no --> B6[Hold reply]
-  end
-```
+For a job worth scoping, record the client-specific assistant brief separately inside this document: duties it may do alone, the named approver, actions it must ask about and hold until approved, exact owner limits, prohibitions, tools and data mappings, tone, manual fallback and acceptance tests. Anything uncertain or not explicitly allowed requires approval. For a no-AI or “not yet” case, document the stop decision and what would change it rather than inventing an assistant design.
 
-## 4. 90 days
-
-| When | What | Done when |
-|---|---|---|
-| Days 1–30 | Try the recommended job | Owner checks the results and decides whether to continue |
-| Days 31–60 | … | … |
-| Days 61–90 | … | … |
-
-## 5. What would change the answer
-
-For each Not ready job, list each blocker and what would clear it. Name any records or staff check that would firm up the numbers. If you recommend waiting for another reason, say what would make it worth taking another look.
-
-## 6. Next step
-
-End with one line that matches what the owner actually wants. If there's a Go job, or a job with a `quote:` blocker, offer a quote from agenticworks.ca for that job. If the answer is a no-AI fix or "not yet", give the concrete action they can take themselves. Only mention agenticworks.ca if they'd want help with the underlying bottleneck. Never pitch a quote for a job they didn't want.
+Record the AI tool they already pay for, data readiness and blockers, any CSV blank shares, owner and staff hours and scorer-reported gaps, unpriced benefits, other pains and the strongest case against the recommendation. Include the raw `--markdown` output, including the table, value breakdown and chart when present. Keep any comparison with `strategy-call` pricing internal; route commercial decisions to Kamran.
