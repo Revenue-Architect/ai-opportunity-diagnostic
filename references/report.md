@@ -1,6 +1,6 @@
 # Diagnostic report and build brief
 
-Produce two separate documents under `$HERMES_HOME/workspace/diagnostic/<business-slug>/`: `<YYYY-MM-DD>-owner-report.md` and `<YYYY-MM-DD>-build-brief.md`. Keep the input file beside them. The owner report starts as an unsent draft. The build brief, input, raw scorer output and client-specific implementation material stay with Agentic Works. This public repository holds blank templates only. Never commit completed briefs, reports, source records, credentials or internal pricing material.
+Save the owner report, internal build brief, scoring input and unedited scorer output in `diagnostic/<business-slug>/` under the current workspace. On Hermes, use `$HERMES_HOME/workspace` as the workspace root when `HERMES_HOME` is set. Name the reports `<YYYY-MM-DD>-owner-report.md` and `<YYYY-MM-DD>-build-brief.md`. This public repository holds blank templates only. Never commit completed briefs, reports, source records, credentials or internal pricing material.
 
 ## Owner report
 
@@ -29,11 +29,25 @@ Only for a recommended **Go** job. Use outcome milestones and decisions, not an 
 
 Translate each blocker into the owner's language and name what would clear it. If a quote is the only blocker, say “Worth a closer look; needs a quote.” If there are additional blockers, name them too. Do not disclose the internal ceiling. If this is a no-AI or “not yet” answer, sections 1, 2, 5 and 6 can be brief.
 
-### 6. Next step and send check
+### 6. Next step
 
 For an owner-prioritized Go job or one that only needs a quote, offer a short scoping conversation with Kamran at Agentic Works. Don't promise a pilot for a quote-only job. Otherwise give the next useful action the owner can take, and don't pitch work they didn't ask for. For requests for exact prompts or setup, offer to scope the build while still answering questions about findings, rationale and no-AI alternatives.
 
-Run the owner draft through `humanizer`, then check it for leaked prompts, internal costs, raw output, technical build detail and internal links. Send only the owner report and only after Kamran explicitly approves the exact recipient(s) and final text. Never send or attach the build brief, input or raw output.
+Run the draft through the installed Humanizer skill. Check the final report for prompts, internal costs, raw output, build details and internal links.
+
+## Internal delivery
+
+For each completed real diagnostic, create `<YYYY-MM-DD>-<business-slug>-diagnostic.zip` in the diagnostic folder. Include the final owner report, internal build brief, scoring input JSON, unedited scorer output and any raw source files used for this diagnostic. Leave out credentials and unrelated files. Run this from the skill folder with the actual file paths:
+
+```text
+python scripts/package_report.py <archive.zip> --owner-report <owner-report.md> --build-brief <build-brief.md> --input <input.json> --scorer-output <scorer-output.md> --source-file <records.csv>
+```
+
+Repeat `--source-file` for each source file used. Omit flags for inputs that were never collected or output that was never generated. If Python is unavailable, use the system ZIP tool to package those same files.
+
+Read the single email address in `.delivery-recipient` at the skill root. The operator sets this private file to authorize automatic delivery to that address. Use a connected email account that accepts ZIP attachments and the subject `AI opportunity diagnostic for <business>`. Put the owner report in the body and attach the ZIP. Leave CC and BCC empty. The ZIP is for internal use at Agentic Works.
+
+Record the send result in the internal build brief, including the message ID if returned. Skip a repeat send for the same report after confirmed delivery. If the address is missing or invalid, keep the ZIP and ask the internal operator to set `.delivery-recipient`. If email or attachment sending is unavailable or fails, give the internal operator the ZIP's download link or absolute path, the configured recipient and the subject, and ask them to attach it to a manual email. In a customer interview, record that handoff in the internal brief and keep the ZIP private.
 
 ## Build brief (internal only)
 
@@ -41,4 +55,4 @@ Use this as the handoff to `strategy-call`. Include the business, date, owner re
 
 For a job worth scoping, record the client-specific assistant brief separately inside this document: duties it may do alone, the named approver, actions it must ask about and hold until approved, exact owner limits, prohibitions, tools and data mappings, tone, manual fallback and acceptance tests. Anything uncertain or not explicitly allowed requires approval. For a no-AI or “not yet” case, document the stop decision and what would change it rather than inventing an assistant design.
 
-Record the AI tool they already pay for, data readiness and blockers, any CSV blank shares, owner and staff hours and scorer-reported gaps, unpriced benefits, other pains and the strongest case against the recommendation. Include the raw `--markdown` output, including the table, value breakdown and chart when present. Keep any comparison with `strategy-call` pricing internal; route commercial decisions to Kamran.
+Record the AI tool they already pay for, data readiness and blockers, any CSV blank shares, owner and staff hours and scorer-reported gaps, unpriced benefits, other pains and the strongest case against the recommendation. Reference the saved raw `--markdown` output for the table, value breakdown and chart. Keep any comparison with `strategy-call` pricing internal; route commercial decisions to Kamran.

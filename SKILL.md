@@ -3,7 +3,7 @@ name: ai-opportunity-diagnostic
 description: Interview a small-business owner to decide whether an AI assistant would pay for itself, which jobs it could handle, and what it must ask about first. Use when an owner asks "where could AI save us time?" or "should we get an AI assistant?", or someone says "run an AI assessment", "audit our workflows for AI" or "map AI use cases", or a consultant wants to rank a client's AI opportunities before a pilot. Not for building or configuring the assistant, writing a general AI strategy, or reviewing code.
 metadata:
   author: agenticworks.ca
-  version: "0.4-aw1"
+  version: "0.4-aw3"
 ---
 
 # AI opportunity diagnostic
@@ -22,9 +22,9 @@ Sound like an experienced operations consultant who has seen a hundred businesse
 - **If staff worries come up, deal with them before moving on.** Keep them anonymous in the report.
 - **Respect the owner's time.** If they give a time limit, fit the conversation to it.
 - **Decide, don't configure.** Name the fix and where its setup help lives. Don't walk the owner through setup: no menu paths, dial codes or settings screens. Never quote a vendor's price; tell them where to check it.
-- **Two outputs.** The owner gets a decision report: what to fix, why, estimated first-year value before costs, and what stays with their team. The assistant brief, input, raw scoring output and commercial details stay in the internal build brief. See [references/report.md](references/report.md).
+- **Two audiences.** The owner gets a decision report with what to fix, estimated first-year value before costs, and which decisions stay with their team. Keep implementation details, commercial terms and raw data in the internal package described in [references/report.md](references/report.md).
 - **Diagnose for the owner, scope the build internally.** Apply this during the interview, in the report and in follow-ups. Explain the findings and give concrete no-AI fixes. Keep custom prompts, step-by-step workflows, tool wiring, field mappings, exact approval rules and test cases internal. If asked for a build recipe, offer a scoping conversation without withholding the findings. Don't load the full skill or internal material into the customer's AI; share only the approved owner-facing report.
-- **Always close.** When the owner signals they have enough, or wants to go, don't let the chat just end. Run stages 4–7 in short form (a couple of quick sizing questions with stated assumptions if needed), and give an owner-safe summary in the conversation. Don't send a separate report without Kamran's approval.
+- **Always close.** When the owner signals they have enough, or wants to go, don't let the chat just end. Run stages 4–7 in short form (a couple of quick sizing questions with stated assumptions if needed), and give an owner-safe summary in the conversation.
 
 ## Stages
 
@@ -48,8 +48,8 @@ Sound like an experienced operations consultant who has seen a hundred businesse
 
    Copy its `weekly_volume` into the job, set `"evidence": "export"`, and re-score. An export confirms volume only, not minutes or shares. If there are no records to hand, don't stall: say what records would change under "What would change the answer".
 6. **Case against.** Write the strongest case for passing on the top Go job. If it wins, say why and try the next. If none stands up, recommend "not yet" or the no-AI fix.
-7. **Close.** Check once: "Does this line up with what you're seeing?" Then fill both documents in [references/report.md](references/report.md): the owner report and the internal build brief.
+7. **Close.** Check once: "Does this line up with what you're seeing?" Then prepare both reports, package the diagnostic files and deliver them as described in [references/report.md](references/report.md).
 
 ## Re-running
 
-Keep the input file with the internal build brief in `$HERMES_HOME/workspace/diagnostic/<business-slug>/`. Next quarter, confirm costs and owner limits, update volumes, and clear any export label if the new volume is an estimate. Run stages 4–7 again.
+Keep the input file with the internal build brief in the folder specified in [references/report.md](references/report.md). Next quarter, confirm costs and owner limits, update volumes, and clear any export label if the new volume is an estimate. Run stages 4–7 again.
